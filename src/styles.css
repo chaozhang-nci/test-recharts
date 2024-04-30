@@ -1,0 +1,12 @@
+.App {
+    font-family: sans-serif;
+    text-align: center;
+  }
+.recharts-pie-label-text {
+    font-family: arial;
+    font-size: 20px;
+    color: black;
+    fill: black;
+  }
+  
+  
