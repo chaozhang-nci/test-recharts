@@ -12,21 +12,27 @@ const data01 = [
     { name: 'Group F', value: 3, fill: '#74F2AE'},
     { name: 'Group G', value: 2, fill: '#987DC4'},
   ];
-   
+  
   const data02 = [
     { name: 'Group A2', value: 151 , fill: '#246AD4'},
     { name: 'Group B2', value: 37 , fill: '#61A1EC'},
     { name: 'Group C2', value: 6, fill: '#A5D3FE' },
+    { name: 'Group F2', value: 4 , fill: '#74F2AE'},
     { name: 'Group D2', value: 1, fill: '#FFCF54' },
     { name: 'Group E2', value: 1, fill: '#F294B0' },
-    { name: 'Group F2', value: 4 , fill: '#74F2AE'},
+    
     { name: 'Group G2', value: 1 , fill: '#987DC4'},
   ];
 
   const renderCustomizedLabel=(props: any) =>
     {
+    // assumption the pie data is sorted from large to small
+    // clockwise 
+    // small slice would be in the corner north-west
+    // include slice index
+   
     const {cx, cy, midAngle, innerRadius, outerRadius, 
-      fill,percent, name, value, color, startAngle, endAngle,index}=props;
+      fill,percent, name, value, color, startAngle, endAngle,index, totoalSlice}=props;
     const RADIAN = Math.PI / 180;
     console.log("mid-angle for "+ index);
     console.log(midAngle);
@@ -34,35 +40,50 @@ const data01 = [
     const cos = Math.cos(-RADIAN * midAngle);
     const sx = cx + outerRadius * cos;
     const sy = cy + outerRadius * sin;
-    const mx = cx + (outerRadius + 20) * cos;
-    const my = cy + (outerRadius + 20) * sin;
+    const mx = cx + (outerRadius + 3* index) * cos;
+    const my = cy + (outerRadius + 3* index) * sin;
+    // const mx = cx + (outerRadius + 20) * cos;
+    // const my = cy + (outerRadius + 20) * sin;
 
-    const isLeftSide = (midAngle < 270 && midAngle > 90); // Change 10 to half of the number of items per side
-    const ySpacing = 10; // Adjust the vertical spacing between lines
-    const xSpacing = -100; // Adjust the horizontal spacing between left and right sides
-    const topSpacing = cy;
+    const isLeftSide = !(midAngle < 90 && midAngle > -90); // Change 10 to half of the number of items per side
+    const isTopSide = !(midAngle < 0 && midAngle > -210); // Change 10 to half of the number of items per side
+    const ySpacing = 20; // Adjust the vertical spacing between lines
+    const xSpacing = 10; // Adjust the horizontal spacing between left and right sides
+    const topSpacing = cy - outerRadius ;
     const ey = isLeftSide ? 
-         +my - (index) * ySpacing 
-        : +my - (index) * ySpacing;
-        console.log(" ey :" + ey)
+        cy - index * ySpacing 
+        : +my -  ySpacing*0.5;
+    console.log(" ey :" + ey + " leftside "+ isLeftSide);
+    console.log(" mx :" + mx + " my "+ my + " topside "+ isTopSide);
     const textAnchor = isLeftSide ? "start" : "end";
-    const xPosition = cx + (!isLeftSide ? -1 : .75) * xSpacing;
+    const xPosition = cx + (isLeftSide ? -1 : 1) * outerRadius;
     let keyName = name.split(" ");
     const diffAngle = endAngle - startAngle;
-    const delta = ((360-diffAngle)/15)-1;
-    const radius = innerRadius + (outerRadius - innerRadius);
-    const x = cx + (radius+delta) * Math.cos(midAngle * RADIAN);
-    const y = cy + (radius+(delta*delta)) * Math.sin(midAngle * RADIAN);
+    console.log(" diff angle "+ diffAngle);
+   
     return (
+   <>{ (Math.abs(diffAngle) > 15 && !(isTopSide && isLeftSide))?
       <g>
+      <text
+        x={isLeftSide ? sx -35: sx + 25 }
+        y={isTopSide ? sy - 5 : sy + 15}
+        fontSize={15}
+        textAnchor={textAnchor}
+        fill={"black"}
+      >
+        {`${(percent > 0.01)?(percent * 100).toFixed(0):(percent * 100).toFixed(2)}%`}
+      </text>
+    </g>
+    :
+    <g>
       <path
-        d={`M${sx},${sy}L${mx},${my}L${xPosition + (index-1) *8},${ey}`}
+        d={`M${sx},${sy}L${mx},${my}L${xPosition + (isLeftSide ? -1 : 1)* xSpacing},${ey}`}
         stroke={fill}
         fill="none"
       />
-      <circle cx={xPosition + (index-1) *8} cy={ey} r={2} fill={fill} stroke="none" />
+      <circle cx={xPosition + (isLeftSide ? -1 : 1)* xSpacing} cy={ey} r={2} fill={fill} stroke="none" />
       <text
-        x={textAnchor === "start" ? xPosition - 45 : xPosition + 50 + (index-1) *8}
+        x={textAnchor === "start" ? xPosition - xSpacing - 50 : xPosition + 50 }
         y={ey + 5}
         fontSize={15}
         textAnchor={textAnchor}
@@ -71,95 +92,9 @@ const data01 = [
         {`${(percent > 0.01)?(percent * 100).toFixed(0):(percent * 100).toFixed(2)}%`}
       </text>
     </g>
+    }</>
     );
   };
-  const renderCustomizedLabelLine= (props:any)=>{
-    let { cx, cy, midAngle, innerRadius, outerRadius, color, startAngle, endAngle } = props;
-    const RADIAN = Math.PI / 180;
-    const diffAngle = endAngle - startAngle;
-    const radius = innerRadius + (outerRadius - innerRadius);
-    let path='';
-    for(let i=0;i<((360-diffAngle)/15);i++){
-      path += `${(cx + (radius+i) * Math.cos(-midAngle * RADIAN))},${(cy + (radius+i*i) * Math.sin(-midAngle * RADIAN))} `
-    }
-    return (
-      <polyline points={path} stroke={color} fill="none" />
-    );
-  }
-
-const renderActiveShape1 = (props: any) => {
-   // console.log(props);
-  const RADIAN = Math.PI / 180;
-  const {
-    cx,
-    cy,
-    midAngle,
-    innerRadius,
-    outerRadius,
-    startAngle,
-    endAngle,
-    fill,
-    payload,
-    percent,
-    value,name, index1, index2
-  } = props;
-  const sin = Math.sin(-RADIAN * midAngle);
-  const cos = Math.cos(-RADIAN * midAngle);
-  const sx = cx + (outerRadius + 0) * cos;
-  const sy = cy + (outerRadius + 0) * sin;
-  const mx = cx + (outerRadius + 30) * cos;
-  const my = cy + (outerRadius + 30) * sin;
-  const ex = mx + (cos >= 0 ? 1 : -1) * 22;
-  const ey = my;
-  const textAnchor = cos >= 0 ? "start" : "end";
-
-  return (
-    <g>
-      {/* <text x={cx} y={cy} dy={8} textAnchor="middle" fill={fill}>
-        {payload.name}
-      </text> */}
-      <Sector
-        cx={cx}
-        cy={cy}
-        innerRadius={innerRadius}
-        outerRadius={outerRadius}
-        startAngle={startAngle}
-        endAngle={endAngle}
-        fill={fill}
-      />
-      {/* <Sector
-        cx={cx}
-        cy={cy}
-        startAngle={startAngle}
-        endAngle={endAngle}
-        innerRadius={outerRadius + 6}
-        outerRadius={outerRadius + 10}
-        fill={fill}
-      /> */}
-      <path
-        d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`}
-        stroke={fill}
-        fill="none"
-      />
-      <circle cx={ex} cy={ey} r={2} fill={fill} stroke="none" />
-      <text
-        x={ex + (cos >= 0 ? 1 : -1) * 12}
-        y={ey + 5}
-        textAnchor={textAnchor}
-        fill="#333" > {`${(percent * 100).toFixed(0)}%`}</text>
-      {/* >{`${name} ${value}`}</text> */}
-      {/* <text
-        x={ex + (cos >= 0 ? 1 : -1) * 12}
-        y={ey}
-        dy={18}
-        textAnchor={textAnchor}
-        fill="#999"
-      >
-        {`(Rate ${(percent * 100).toFixed(2)}%)`}
-      </text> */}
-    </g>
-  );
-};
 
 export default function App() {
   return (
@@ -175,22 +110,23 @@ export default function App() {
         outerRadius={80}
         fill="#8884d8"
         dataKey="value"
-        //onMouseEnter={onPieEnter1}
-        label={renderActiveShape1}
-        //labelLine={renderCustomizedLabelLine}
-        //label={renderCustomizedLabel}
+        startAngle={90}
+        endAngle={-270}
+        label={renderCustomizedLabel}
+        labelLine={false}
       />
      <Pie
-        data={data02}
+        data={data02.reverse()}
         cx={500}
         cy={200}
-        innerRadius={30}
+        //innerRadius={30}
         outerRadius={80}
         fill="#8884d8"
         dataKey="value"
+        startAngle={90}
+        endAngle={-270}
         label={renderCustomizedLabel}
-        //label={renderActiveShape}
-       // onMouseEnter={onPieEnter2}
+        labelLine={false}
       />
       <Tooltip />
     </PieChart>
